@@ -8,16 +8,19 @@ import {
   Sparkles,
   Info,
   CheckCircle,
-  HelpCircle,
-  Clock,
+  Play,
+  RotateCcw,
   Layers,
 } from 'lucide-react';
 import { ALGORITHM_THEORY } from '../data/theory';
 import { ALGORITHM_EXAMPLES } from '../data/examples';
+import { runFCFS } from '../engine/scheduling/fcfs';
+import SimulationView from '../components/SimulationView';
 
 export default function AlgorithmPage() {
   const { id = 'fcfs' } = useParams();
-  const [activeTab, setActiveTab] = useState('learn'); // 'learn' | 'examples' | 'try'
+  const [activeTab, setActiveTab] = useState('examples'); // 'learn' | 'examples' | 'try'
+  const [selectedExampleId, setSelectedExampleId] = useState(null);
 
   const algorithm = ALGORITHM_THEORY[id] || {
     id,
@@ -33,6 +36,7 @@ export default function AlgorithmPage() {
   };
 
   const examples = ALGORITHM_EXAMPLES[id] || [];
+  const selectedExample = examples.find((ex) => ex.id === selectedExampleId);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between">
@@ -73,7 +77,10 @@ export default function AlgorithmPage() {
         <div className="border-b border-slate-200 dark:border-slate-800">
           <div className="flex gap-2 sm:gap-4 overflow-x-auto">
             <button
-              onClick={() => setActiveTab('learn')}
+              onClick={() => {
+                setActiveTab('learn');
+                setSelectedExampleId(null);
+              }}
               className={`inline-flex items-center gap-2 py-3 px-4 border-b-2 font-semibold text-sm transition-all whitespace-nowrap ${
                 activeTab === 'learn'
                   ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400'
@@ -97,7 +104,10 @@ export default function AlgorithmPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('try')}
+              onClick={() => {
+                setActiveTab('try');
+                setSelectedExampleId(null);
+              }}
               className={`inline-flex items-center gap-2 py-3 px-4 border-b-2 font-semibold text-sm transition-all whitespace-nowrap ${
                 activeTab === 'try'
                   ? 'border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400'
@@ -112,11 +122,12 @@ export default function AlgorithmPage() {
 
         {/* Tab Content Area */}
         <div className="py-4">
+          {/* TAB 1: LEARN */}
           {activeTab === 'learn' && (
             <div className="space-y-6 animate-fade-in">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Definition & Theory Card */}
-                <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+                <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
                   <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Info className="w-5 h-5 text-brand-500" />
                     How {algorithm.shortName} Works
@@ -141,7 +152,7 @@ export default function AlgorithmPage() {
                 </div>
 
                 {/* Pros & Cons Card */}
-                <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+                <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
                       Advantages
@@ -172,57 +183,127 @@ export default function AlgorithmPage() {
                 </div>
               </div>
 
-              {/* Animated demo visual placeholder */}
-              <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center space-y-2">
-                <Layers className="w-8 h-8 text-brand-500 mx-auto opacity-75" />
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Concept Interactive Demo Placeholder
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                  The visual simulation with Gantt chart playback, live ready queue, and step-by-step narration will be connected in Phase 1.
-                </p>
+              {/* Quick Jump to Examples CTA */}
+              <div className="p-6 rounded-2xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200/80 dark:border-brand-900/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-1 text-center sm:text-left">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Ready to see {algorithm.shortName} in action?
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Explore solved textbook problems or step through the Silberschatz convoy effect simulation.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('examples')}
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-md shadow-brand-500/25 shrink-0 transition-all"
+                >
+                  Explore Solved Examples →
+                </button>
               </div>
             </div>
           )}
 
+          {/* TAB 2: SOLVED EXAMPLES */}
           {activeTab === 'examples' && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="p-4 rounded-xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200/60 dark:border-brand-900/60 text-xs text-brand-700 dark:text-brand-300 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 shrink-0" />
-                <span>
-                  Select any pre-configured textbook problem to load its processes and watch the step-by-step playback.
-                </span>
-              </div>
+            <div className="space-y-6 animate-fade-in">
+              {selectedExample ? (
+                /* Active Simulation View for Chosen Example */
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => setSelectedExampleId(null)}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all group"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                      <span>Back to Examples List</span>
+                    </button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {examples.map(ex => (
-                  <div
-                    key={ex.id}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm hover:border-brand-400 transition-colors"
-                  >
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                      {ex.title}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {ex.description}
-                    </p>
-                    <div className="text-[11px] font-mono p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300">
-                      Processes: {ex.input.processes.map(p => `${p.pid}(A:${p.arrival}, B:${p.burst})`).join(', ')}
-                    </div>
-                    <div className="pt-2">
-                      <button
-                        disabled
-                        className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-400 cursor-not-allowed text-center"
-                      >
-                        Simulation ready in Phase 1
-                      </button>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Example: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedExample.title}</span>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="p-4 rounded-2xl bg-brand-50/40 dark:bg-brand-950/20 border border-brand-200/60 dark:border-brand-900/60 space-y-1">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {selectedExample.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {selectedExample.description}
+                    </p>
+                  </div>
+
+                  {/* Complete Simulation View */}
+                  <SimulationView
+                    input={selectedExample.input}
+                    runAlgorithm={runFCFS}
+                    algorithmName={algorithm.shortName}
+                  />
+                </div>
+              ) : (
+                /* Examples Grid Selection */
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200/60 dark:border-brand-900/60 text-xs text-brand-700 dark:text-brand-300 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <span>
+                      Select any pre-configured textbook problem to load its processes and watch the step-by-step playback with Gantt chart and live metrics.
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {examples.map((ex, idx) => (
+                      <div
+                        key={ex.id}
+                        className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700 transition-all flex flex-col justify-between group"
+                      >
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                              Problem #{idx + 1}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              {ex.input.processes.length} Processes
+                            </span>
+                          </div>
+
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                            {ex.title}
+                          </h3>
+
+                          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            {ex.description}
+                          </p>
+
+                          {/* Process chips */}
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {ex.input.processes.map((p) => (
+                              <span
+                                key={p.pid}
+                                className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                              >
+                                {p.pid}({p.arrival}, {p.burst})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                          <button
+                            onClick={() => setSelectedExampleId(ex.id)}
+                            className="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all active:scale-98"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                            <span>Run Simulation</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* TAB 3: TRY YOUR OWN */}
           {activeTab === 'try' && (
             <div className="space-y-6 animate-fade-in">
               <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
@@ -243,7 +324,7 @@ export default function AlgorithmPage() {
                     Interactive Process Input Form Placeholder
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    Supports adding/removing processes, random input generator, textbook presets, and instant simulation validation.
+                    Custom process builder with random presets will be wired up in the next phase. For now, try the Solved Examples tab!
                   </p>
                 </div>
               </div>
