@@ -2,7 +2,11 @@ import React from 'react';
 import { getProcessColor } from '../utils/colors';
 import { Activity } from 'lucide-react';
 
-export default function GanttChart({ timeline = [], currentStep = null }) {
+export default function GanttChart({
+  timeline = [],
+  currentStep = null,
+  showAll = false,
+}) {
   if (!timeline || timeline.length === 0) {
     return (
       <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm text-center text-xs text-slate-400">
@@ -11,24 +15,26 @@ export default function GanttChart({ timeline = [], currentStep = null }) {
     );
   }
 
-  const currentTime = currentStep ? currentStep.time : 0;
+  const currentTime = currentStep ? currentStep.time : (showAll && timeline.length > 0 ? timeline[timeline.length - 1].end : 0);
   const currentRunning = currentStep ? currentStep.running : null;
 
-  // Filter visible blocks based on currentStep
-  const visibleBlocks = timeline.filter((block) => {
-    // Already completed blocks
-    if (block.end <= currentTime) {
-      return true;
-    }
-    // Currently active block
-    if (block.start <= currentTime && currentTime < block.end) {
-      if (block.pid === 'IDLE') {
-        return currentRunning === null;
-      }
-      return currentRunning === block.pid;
-    }
-    return false;
-  });
+  // Filter visible blocks based on currentStep or showAll
+  const visibleBlocks = showAll
+    ? timeline
+    : timeline.filter((block) => {
+        // Already completed blocks
+        if (block.end <= currentTime) {
+          return true;
+        }
+        // Currently active block
+        if (block.start <= currentTime && currentTime < block.end) {
+          if (block.pid === 'IDLE') {
+            return currentRunning === null;
+          }
+          return currentRunning === block.pid;
+        }
+        return false;
+      });
 
   return (
     <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
@@ -39,11 +45,15 @@ export default function GanttChart({ timeline = [], currentStep = null }) {
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">Gantt Chart</h3>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Active Block</span>
+          {!showAll && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Active Block</span>
+            </span>
+          )}
+          <span className="font-mono">
+            {showAll ? `Total Time: ${currentTime}` : `t = ${currentTime}`}
           </span>
-          <span className="font-mono">t = {currentTime}</span>
         </div>
       </div>
 
@@ -60,6 +70,7 @@ export default function GanttChart({ timeline = [], currentStep = null }) {
               {visibleBlocks.map((block, idx) => {
                 const duration = block.end - block.start;
                 const isRunning =
+                  !showAll &&
                   block.start <= currentTime &&
                   currentTime < block.end &&
                   (block.pid === 'IDLE' ? currentRunning === null : currentRunning === block.pid);

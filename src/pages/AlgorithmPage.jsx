@@ -6,24 +6,22 @@ import {
   FileCode,
   PlaySquare,
   Sparkles,
-  Info,
-  CheckCircle,
   Play,
-  RotateCcw,
-  Layers,
 } from 'lucide-react';
 import { ALGORITHM_THEORY } from '../data/theory';
 import { ALGORITHM_EXAMPLES } from '../data/examples';
 import { runFCFS } from '../engine/scheduling/fcfs';
 import SimulationView from '../components/SimulationView';
+import LearnTab from '../components/learn/LearnTab';
 
 export default function AlgorithmPage() {
   const { id = 'fcfs' } = useParams();
-  const [activeTab, setActiveTab] = useState('examples'); // 'learn' | 'examples' | 'try'
+  const [activeTab, setActiveTab] = useState('learn'); // 'learn' | 'examples' | 'try'
   const [selectedExampleId, setSelectedExampleId] = useState(null);
 
   const algorithm = ALGORITHM_THEORY[id] || {
     id,
+    title: id.toUpperCase(),
     name: id.toUpperCase(),
     shortName: id.toUpperCase(),
     category: 'CPU Scheduling',
@@ -32,7 +30,6 @@ export default function AlgorithmPage() {
     definition: 'Interactive simulation for this algorithm will be enabled in phase 1.',
     pros: [],
     cons: [],
-    whenUsed: [],
   };
 
   const examples = ALGORITHM_EXAMPLES[id] || [];
@@ -124,83 +121,10 @@ export default function AlgorithmPage() {
         <div className="py-4">
           {/* TAB 1: LEARN */}
           {activeTab === 'learn' && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Definition & Theory Card */}
-                <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Info className="w-5 h-5 text-brand-500" />
-                    How {algorithm.shortName} Works
-                  </h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {algorithm.definition}
-                  </p>
-
-                  <div className="pt-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                      When it is used:
-                    </h3>
-                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                      {algorithm.whenUsed?.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-brand-500 mt-0.5 shrink-0" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Pros & Cons Card */}
-                <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
-                      Advantages
-                    </h3>
-                    <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                      {algorithm.pros?.map((pro, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5">
-                          <span className="text-emerald-500 font-bold">+</span>
-                          <span>{pro}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
-                      Disadvantages
-                    </h3>
-                    <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                      {algorithm.cons?.map((con, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5">
-                          <span className="text-rose-500 font-bold">−</span>
-                          <span>{con}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Jump to Examples CTA */}
-              <div className="p-6 rounded-2xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200/80 dark:border-brand-900/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="space-y-1 text-center sm:text-left">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Ready to see {algorithm.shortName} in action?
-                  </h4>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Explore solved textbook problems or step through the Silberschatz convoy effect simulation.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveTab('examples')}
-                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-md shadow-brand-500/25 shrink-0 transition-all"
-                >
-                  Explore Solved Examples →
-                </button>
-              </div>
-            </div>
+            <LearnTab
+              theory={algorithm}
+              runAlgorithm={runFCFS}
+            />
           )}
 
           {/* TAB 2: SOLVED EXAMPLES */}
@@ -324,7 +248,7 @@ export default function AlgorithmPage() {
                     Interactive Process Input Form Placeholder
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    Custom process builder with random presets will be wired up in the next phase. For now, try the Solved Examples tab!
+                    Custom process builder with random presets will be wired up in the next phase. For now, explore the Learn and Solved Examples tabs!
                   </p>
                 </div>
               </div>
